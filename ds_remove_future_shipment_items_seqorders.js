@@ -5,7 +5,7 @@
 define(['N/search'], (search) => {
 
   const beforeSubmit = (ctx) => {
-    if (ctx.type !== ctx.UserEventType.CREATE) return;
+    if (ctx.type !== ctx.UserEventType.EDIT) return;
 
     const rec = ctx.newRecord;
     const soId = rec.getValue('createdfrom');
