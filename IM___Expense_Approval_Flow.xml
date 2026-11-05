@@ -1012,7 +1012,7 @@
           <scheduledelay></scheduledelay>
           <scheduletimeunit></scheduletimeunit>
           <tostate>[scriptid=customworkflow_expense_approval_flow.workflowstate82]</tostate>
-          <triggertype></triggertype>
+          <triggertype>AFTERSUBMIT</triggertype>
           <waitforworkflow></waitforworkflow>
           <waitforworkflowstate></waitforworkflowstate>
           <initcondition>
