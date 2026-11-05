@@ -1016,7 +1016,7 @@
           <waitforworkflow></waitforworkflow>
           <waitforworkflowstate></waitforworkflowstate>
           <initcondition>
-            <formula><![CDATA["Next Approver:Expense Approval Limit" = 0.00]]></formula>
+            <formula><![CDATA[( isEmpty("Next Approver:Expense Approval Limit") = 'T' OR "Next Approver:Expense Approval Limit" =  )]]></formula>
             <type>VISUAL_BUILDER</type>
             <parameters>
               <parameter>
