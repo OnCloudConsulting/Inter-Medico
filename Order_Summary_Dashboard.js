@@ -626,98 +626,11 @@ function formatSearchDate(isoValue) {
     return format.format({ value: date, type: format.Type.DATE });
 }
 
-function buildDateCondition(fieldName, from, to) {
-    if (from && to) {
-        return [fieldName, 'within', from, to];
-    }
-
-    if (from) {
-        return [fieldName, 'onorafter', from];
-    }
-
-    return [fieldName, 'onorbefore', to];
-}
-
-/*
- * Item IDs that have at least one open sales order line, with
- * quantity still to fulfill, whose Supply Required By Date
- * (requesteddate) falls in the range. Grouped by item, so each
- * item comes back once however many lines it has.
- */
-function findItemIdsBySupplyDate(fieldName, from, to) {
-    const itemColumn = search.createColumn({
-        name: 'item',
-        summary: search.Summary.GROUP
-    });
-
-    const searchObj = search.create({
-        type: search.Type.TRANSACTION,
-        filters: [
-            ['type', 'anyof', 'SalesOrd'],
-            'AND', ['mainline', 'is', 'F'],
-            'AND', ['closed', 'is', 'F'],
-            'AND', ['status', 'anyof', ENDING_DATE.salesOrderStatuses],
-            'AND', buildDateCondition(fieldName, from, to),
-            'AND', ['formulanumeric: {quantity} - NVL({quantityshiprecv}, 0)', 'greaterthan', '0']
-        ],
-        columns: [itemColumn]
-    });
-
-    const ids = [];
-    const seen = Object.create(null);
-    const paged = searchObj.runPaged({ pageSize: PAGE_SIZE });
-
-    (paged.pageRanges || []).forEach(function (range) {
-        paged.fetch({ index: range.index }).data.forEach(function (result) {
-            const id = String(safeGetValue(result, itemColumn) || '');
-
-            if (id && !seen[id]) {
-                seen[id] = true;
-                ids.push(id);
-            }
-        });
-    });
-
-    return ids;
-}
-
-/*
- * internalid anyof, split into OR groups of 1,000 so a long
- * item list stays within NetSuite's filter limits.
- */
-function itemIdCondition(ids) {
-    if (!ids.length) {
-        return ['internalid', 'anyof', '@NONE@'];
-    }
-
-    const groups = [];
-
-    for (let start = 0; start < ids.length; start += 1000) {
-        if (groups.length) {
-            groups.push('OR');
-        }
-
-        groups.push(['internalid', 'anyof', ids.slice(start, start + 1000)]);
-    }
-
-    return groups.length === 1 ? groups[0] : groups;
-}
-
 /*
  * Appends the report's serverDateFilter to the saved search while
- * keeping its own criteria intact.
- *
- * Transaction search: the plain line field is filtered directly.
- *
- * Item search: the date is NOT added as a "transaction.requesteddate"
- * join filter. That join makes NetSuite return one result per matching
- * transaction line, so a summarized search SUMs the item's quantities
- * (on hand, on order, back ordered, reorder qty...) once per line and
- * items with many sales order lines, such as Blankets, show inflated
- * quantities. The join also matched every transaction type, not only
- * open sales orders. Instead, the matching item IDs are found in a
- * separate sales order line search and the item search is limited to
- * those IDs, so its quantities are the same as without the filter.
+ * keeping its own criteria intact. An item search reaches the field
+ * through the transaction join ("transaction.requesteddate"); a
+ * transaction search uses the plain field.
  */
 function addDateFilter(searchObj, reportKey, dateFrom, dateTo) {
     const def = REPORT_UI[reportKey] && REPORT_UI[reportKey].serverDateFilter;
@@ -733,12 +646,18 @@ function addDateFilter(searchObj, reportKey, dateFrom, dateTo) {
         return;
     }
 
+    const fieldName = (def.join && searchKind(searchObj.searchType) === 'item')
+        ? def.join + '.' + def.field
+        : def.field;
+
     let dateFilter;
 
-    if (def.join && searchKind(searchObj.searchType) === 'item') {
-        dateFilter = itemIdCondition(findItemIdsBySupplyDate(def.field, from, to));
+    if (from && to) {
+        dateFilter = [fieldName, 'within', from, to];
+    } else if (from) {
+        dateFilter = [fieldName, 'onorafter', from];
     } else {
-        dateFilter = buildDateCondition(def.field, from, to);
+        dateFilter = [fieldName, 'onorbefore', to];
     }
 
     const expression = searchObj.filterExpression || [];
@@ -2674,6 +2593,33 @@ body.modal-open {
         'rate'
     ];
 
+    /*
+     * True when the column has values and every non-empty one is a
+     * number (commas allowed), so quantity columns with any label
+     * are centered.
+     */
+    function numericValues(rows, columnKey) {
+        var found = false;
+
+        for (var index = 0; index < (rows || []).length; index++) {
+            var value = rows[index][columnKey];
+
+            if (value === null || value === undefined || value === '') {
+                continue;
+            }
+
+            var text = String(value).replace(/,/g, '').trim();
+
+            if (text === '' || isNaN(Number(text))) {
+                return false;
+            }
+
+            found = true;
+        }
+
+        return found;
+    }
+
     function numericLabel(label) {
         var text = normalize(label);
 
@@ -3026,11 +2972,16 @@ var reportLayout = {
     columns: columns.filter(function (column) {
         return !hiddenKeys[column.key];
     }).map(function (column) {
+        var linkType = linkTypes[column.key] || '';
+
         return {
             key: column.key,
             label: column.label,
-            numeric: numericLabel(column.label),
-            linkType: linkTypes[column.key] || ''
+            // the label says quantity, or every value in the column is a number
+            numeric: numericLabel(column.label) ||
+                (linkType !== 'item' && linkType !== 'transaction' && linkType !== 'customer' &&
+                    numericValues((cache[key] || {}).rows, column.key)),
+            linkType: linkType
         };
     })
 };
