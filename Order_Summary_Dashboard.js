@@ -626,11 +626,98 @@ function formatSearchDate(isoValue) {
     return format.format({ value: date, type: format.Type.DATE });
 }
 
+function buildDateCondition(fieldName, from, to) {
+    if (from && to) {
+        return [fieldName, 'within', from, to];
+    }
+
+    if (from) {
+        return [fieldName, 'onorafter', from];
+    }
+
+    return [fieldName, 'onorbefore', to];
+}
+
+/*
+ * Item IDs that have at least one open sales order line, with
+ * quantity still to fulfill, whose Supply Required By Date
+ * (requesteddate) falls in the range. Grouped by item, so each
+ * item comes back once however many lines it has.
+ */
+function findItemIdsBySupplyDate(fieldName, from, to) {
+    const itemColumn = search.createColumn({
+        name: 'item',
+        summary: search.Summary.GROUP
+    });
+
+    const searchObj = search.create({
+        type: search.Type.TRANSACTION,
+        filters: [
+            ['type', 'anyof', 'SalesOrd'],
+            'AND', ['mainline', 'is', 'F'],
+            'AND', ['closed', 'is', 'F'],
+            'AND', ['status', 'anyof', ENDING_DATE.salesOrderStatuses],
+            'AND', buildDateCondition(fieldName, from, to),
+            'AND', ['formulanumeric: {quantity} - NVL({quantityshiprecv}, 0)', 'greaterthan', '0']
+        ],
+        columns: [itemColumn]
+    });
+
+    const ids = [];
+    const seen = Object.create(null);
+    const paged = searchObj.runPaged({ pageSize: PAGE_SIZE });
+
+    (paged.pageRanges || []).forEach(function (range) {
+        paged.fetch({ index: range.index }).data.forEach(function (result) {
+            const id = String(safeGetValue(result, itemColumn) || '');
+
+            if (id && !seen[id]) {
+                seen[id] = true;
+                ids.push(id);
+            }
+        });
+    });
+
+    return ids;
+}
+
+/*
+ * internalid anyof, split into OR groups of 1,000 so a long
+ * item list stays within NetSuite's filter limits.
+ */
+function itemIdCondition(ids) {
+    if (!ids.length) {
+        return ['internalid', 'anyof', '@NONE@'];
+    }
+
+    const groups = [];
+
+    for (let start = 0; start < ids.length; start += 1000) {
+        if (groups.length) {
+            groups.push('OR');
+        }
+
+        groups.push(['internalid', 'anyof', ids.slice(start, start + 1000)]);
+    }
+
+    return groups.length === 1 ? groups[0] : groups;
+}
+
 /*
  * Appends the report's serverDateFilter to the saved search while
- * keeping its own criteria intact. An item search reaches the field
- * through the transaction join ("transaction.requesteddate"); a
- * transaction search uses the plain field.
+ * keeping its own criteria intact.
+ *
+ * Transaction search: the plain line field is filtered directly.
+ *
+ * Item search: the date is NOT added as a "transaction.requesteddate"
+ * join filter. That join makes NetSuite return one result per matching
+ * transaction line, so a summarized search SUMs the item's quantities
+ * (on hand, on order, back ordered, reorder qty...) once per line and
+ * items with many sales order lines, such as Blankets, show inflated
+ * quantities. The join also matched every transaction type, not only
+ * open sales orders. Instead, the matching item IDs are found in a
+ * separate sales order line search and the item search is limited to
+ * those IDs, so its quantities are the same as without the filter.
  */
 function addDateFilter(searchObj, reportKey, dateFrom, dateTo) {
     const def = REPORT_UI[reportKey] && REPORT_UI[reportKey].serverDateFilter;
@@ -646,18 +733,12 @@ function addDateFilter(searchObj, reportKey, dateFrom, dateTo) {
         return;
     }
 
-    const fieldName = (def.join && searchKind(searchObj.searchType) === 'item')
-        ? def.join + '.' + def.field
-        : def.field;
-
     let dateFilter;
 
-    if (from && to) {
-        dateFilter = [fieldName, 'within', from, to];
-    } else if (from) {
-        dateFilter = [fieldName, 'onorafter', from];
+    if (def.join && searchKind(searchObj.searchType) === 'item') {
+        dateFilter = itemIdCondition(findItemIdsBySupplyDate(def.field, from, to));
     } else {
-        dateFilter = [fieldName, 'onorbefore', to];
+        dateFilter = buildDateCondition(def.field, from, to);
     }
 
     const expression = searchObj.filterExpression || [];
@@ -1993,8 +2074,13 @@ body {
     white-space: nowrap;
 }
 
+/*
+ * The table scrolls inside its own box, so the header row
+ * and the first column stay frozen while scrolling.
+ */
 .table-wrap {
     overflow: auto;
+    max-height: 70vh;
     border: 1px solid var(--line);
     border-radius: 9px;
 }
@@ -2015,6 +2101,29 @@ th {
     padding: 11px;
     border-bottom: 1px solid var(--line);
     white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    /* collapsed borders scroll away with sticky cells, so the line is drawn as a shadow */
+    box-shadow: inset 0 -1px 0 var(--line);
+}
+
+td {
+    background: var(--panel);
+}
+
+/* frozen first column (usually Item) for side-to-side scrolling */
+.table-wrap:not(.modal-table) th:first-child,
+.table-wrap:not(.modal-table) td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    box-shadow: inset -1px 0 0 var(--line);
+}
+
+.table-wrap:not(.modal-table) th:first-child {
+    z-index: 3;
+    box-shadow: inset -1px -1px 0 var(--line);
 }
 
 td {
@@ -2029,7 +2138,7 @@ tbody tr:nth-child(even) td {
 }
 
 .num {
-    text-align: right;
+    text-align: center;
     font-family: monospace;
 }
 
@@ -2194,6 +2303,10 @@ body.modal-open {
 
 .modal-side.pending .side-sum strong {
     color: var(--warn);
+}
+
+.modal-table {
+    max-height: 55vh;
 }
 
 .modal-table table {
@@ -3909,7 +4022,7 @@ var reportLayout = {
             'td { font-size: 10px; padding: 4px 6px; ' +
             'border-bottom: 1px solid #e4e7e2; vertical-align: top; }'
         );
-        html.push('th.num, td.num { text-align: right; }');
+        html.push('th.num, td.num { text-align: center; }');
         html.push('thead { display: table-header-group; }');
         html.push('tr { page-break-inside: avoid; }');
         html.push('</style></head><body>');
