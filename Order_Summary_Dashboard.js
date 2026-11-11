@@ -627,6 +627,59 @@ function formatSearchDate(isoValue) {
 }
 
 /*
+ * Used only when the saved search's own open-line group can't be found.
+ */
+const DEFAULT_DEMAND_LINE = [
+    ['transaction.type', 'anyof', 'SalesOrd', 'TrnfrOrd'],
+    'AND', ['transaction.mainline', 'is', 'F'],
+    'AND', ['transaction.taxline', 'is', 'F'],
+    'AND', ['transaction.shipping', 'is', 'F'],
+    'AND', ['transaction.cogs', 'is', 'F'],
+    'AND', ['transaction.closed', 'is', 'F']
+];
+
+const LOGIC_WORDS = { and: true, or: true, not: true };
+
+function isCondition(node) {
+    return Array.isArray(node) &&
+        typeof node[0] === 'string' &&
+        !LOGIC_WORDS[node[0].toLowerCase()];
+}
+
+/*
+ * Finds the AND-only group in the saved search criteria that holds
+ * "transaction.type" (the open sales order / transfer order line
+ * conditions), so the date filter uses exactly the same line rules.
+ */
+function findDemandLineGroup(node) {
+    if (!Array.isArray(node) || isCondition(node)) {
+        return null;
+    }
+
+    const hasOr = node.some(function (part) {
+        return typeof part === 'string' && part.toLowerCase() === 'or';
+    });
+
+    const hasType = node.some(function (part) {
+        return isCondition(part) && part[0].toLowerCase() === 'transaction.type';
+    });
+
+    if (hasType && !hasOr) {
+        return node;
+    }
+
+    for (let index = 0; index < node.length; index++) {
+        const found = findDemandLineGroup(node[index]);
+
+        if (found) {
+            return found;
+        }
+    }
+
+    return null;
+}
+
+/*
  * Appends the report's serverDateFilter to the saved search while
  * keeping its own criteria intact. An item search reaches the field
  * through the transaction join ("transaction.requesteddate"); a
@@ -661,6 +714,23 @@ function addDateFilter(searchObj, reportKey, dateFrom, dateTo) {
     }
 
     const expression = searchObj.filterExpression || [];
+
+    /*
+     * Item search: the saved search's criteria are
+     *   (open SO/TO line at the location) OR (on hand < reorder point).
+     * The second half has no transaction conditions, so for an item
+     * below its reorder point EVERY joined transaction row passes:
+     * SO main lines, closed lines and other locations' lines. With the
+     * date filter those rows were summed into Blankets / Reg. Back Order
+     * / Sequesters. The date is therefore tied to the saved search's
+     * own open-line conditions, so only real open demand lines due in
+     * the range are summed.
+     */
+    if (def.join && searchKind(searchObj.searchType) === 'item') {
+        const lineConditions = findDemandLineGroup(expression) || DEFAULT_DEMAND_LINE;
+
+        dateFilter = [JSON.parse(JSON.stringify(lineConditions)), 'AND', dateFilter];
+    }
 
     searchObj.filterExpression = expression.length
         ? [expression, 'AND', dateFilter]
