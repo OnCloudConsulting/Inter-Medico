@@ -23,8 +23,8 @@
       <description></description>
       <donotexitworkflow>F</donotexitworkflow>
       <name>Submit for approval</name>
-      <positionx>893</positionx>
-      <positiony>-7</positiony>
+      <positionx>423</positionx>
+      <positiony>163</positiony>
       <workflowactions triggertype="ONENTRY">
         <setfieldvalueaction scriptid="workflowaction339">
           <clienttriggerfields></clienttriggerfields>
@@ -114,7 +114,7 @@
           <label>Submit For Approval</label>
           <saverecordfirst>T</saverecordfirst>
           <initcondition>
-            <formula><![CDATA[( "Created By" IN ("Current User") OR "User" IN ("Employee1") )]]></formula>
+            <formula><![CDATA[( "Created By" IN ("Current User") OR "User" IN ("Employee1") ) AND "Approval Status" IN ("Approval Status1")]]></formula>
             <type>VISUAL_BUILDER</type>
             <parameters>
               <parameter>
@@ -135,77 +135,18 @@
                 <selectrecordtype>-4</selectrecordtype>
                 <value>[ACCOUNT_SPECIFIC_VALUE]</value>
               </parameter>
+              <parameter>
+                <name>Approval Status</name>
+                <value>STDBODYAPPROVALSTATUS</value>
+              </parameter>
+              <parameter>
+                <name>Approval Status1</name>
+                <selectrecordtype>-243</selectrecordtype>
+                <value>1</value>
+              </parameter>
             </parameters>
           </initcondition>
         </addbuttonaction>
-        <setdisplaytypeaction scriptid="workflowaction391">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>HIDDEN</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula><![CDATA[( "User Role" NOT IN ("Role1") OR "Type" NOT IN ("Transaction Type1") )]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>User Role</name>
-                <value>STDUSERROLE</value>
-              </parameter>
-              <parameter>
-                <name>Role1</name>
-                <selectrecordtype>-118</selectrecordtype>
-                <value>[scriptid=customrole_dsl__wd_std_apanalyst]</value>
-              </parameter>
-              <parameter>
-                <name>Type</name>
-                <value>STDBODYTRANTYPE</value>
-              </parameter>
-              <parameter>
-                <name>Transaction Type1</name>
-                <selectrecordtype>-100</selectrecordtype>
-                <value>VENDORBILL</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </setdisplaytypeaction>
-        <setfieldmandatoryaction scriptid="workflowaction392">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <ismandatory>T</ismandatory>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula><![CDATA["User Role" IN ("Role1") AND "Type" IN ("Transaction Type1")]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>User Role</name>
-                <value>STDUSERROLE</value>
-              </parameter>
-              <parameter>
-                <name>Role1</name>
-                <selectrecordtype>-118</selectrecordtype>
-                <value>[scriptid=customrole_dsl__wd_std_apanalyst]</value>
-              </parameter>
-              <parameter>
-                <name>Type</name>
-                <value>STDBODYTRANTYPE</value>
-              </parameter>
-              <parameter>
-                <name>Transaction Type1</name>
-                <selectrecordtype>-100</selectrecordtype>
-                <value>VENDORBILL</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </setfieldmandatoryaction>
       </workflowactions>
       <workflowtransitions>
         <workflowtransition scriptid="workflowtransition287">
@@ -220,23 +161,9 @@
           <waitforworkflow></waitforworkflow>
           <waitforworkflowstate></waitforworkflowstate>
           <initcondition>
-            <formula><![CDATA["Vendor Category" IN ("{#Vendor#} Category1","{#Vendor#} Category2") AND isEmpty("Related Transaction") = 'T']]></formula>
+            <formula><![CDATA[isEmpty("Related Transaction") = 'T']]></formula>
             <type>VISUAL_BUILDER</type>
             <parameters>
-              <parameter>
-                <name>Vendor Category</name>
-                <value>[scriptid=custbody_vendor_category]</value>
-              </parameter>
-              <parameter>
-                <name>{#Vendor#} Category1</name>
-                <selectrecordtype>-110</selectrecordtype>
-                <value>[ACCOUNT_SPECIFIC_VALUE]</value>
-              </parameter>
-              <parameter>
-                <name>{#Vendor#} Category2</name>
-                <selectrecordtype>-110</selectrecordtype>
-                <value>[ACCOUNT_SPECIFIC_VALUE]</value>
-              </parameter>
               <parameter>
                 <name>Related Transaction</name>
                 <value>[scriptid=custbody_related_transaction]</value>
@@ -256,75 +183,12 @@
           <waitforworkflow></waitforworkflow>
           <waitforworkflowstate></waitforworkflowstate>
           <initcondition>
-            <formula><![CDATA[( isEmpty("Related Transaction") = 'F' AND "Type" IN ("Transaction Type1") ) OR ( "Vendor Category" NOT IN ("{#Vendor#} Category1","{#Vendor#} Category2") ) AND "User Role" NOT IN ("Role1")]]></formula>
+            <formula><![CDATA[( isEmpty("Related Transaction") = 'F' AND "Type" IN ("Transaction Type1") )]]></formula>
             <type>VISUAL_BUILDER</type>
             <parameters>
               <parameter>
                 <name>Related Transaction</name>
                 <value>[scriptid=custbody_related_transaction]</value>
-              </parameter>
-              <parameter>
-                <name>Type</name>
-                <value>STDBODYTRANTYPE</value>
-              </parameter>
-              <parameter>
-                <name>Transaction Type1</name>
-                <selectrecordtype>-100</selectrecordtype>
-                <value>VENDORBILL</value>
-              </parameter>
-              <parameter>
-                <name>Vendor Category</name>
-                <value>[scriptid=custbody_vendor_category]</value>
-              </parameter>
-              <parameter>
-                <name>{#Vendor#} Category1</name>
-                <selectrecordtype>-110</selectrecordtype>
-                <value>[ACCOUNT_SPECIFIC_VALUE]</value>
-              </parameter>
-              <parameter>
-                <name>{#Vendor#} Category2</name>
-                <selectrecordtype>-110</selectrecordtype>
-                <value>[ACCOUNT_SPECIFIC_VALUE]</value>
-              </parameter>
-              <parameter>
-                <name>User Role</name>
-                <value>STDUSERROLE</value>
-              </parameter>
-              <parameter>
-                <name>Role1</name>
-                <selectrecordtype>-118</selectrecordtype>
-                <value>[scriptid=customrole_dsl__wd_std_apanalyst]</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </workflowtransition>
-        <workflowtransition scriptid="workflowtransition307">
-          <buttonaction>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate92.workflowaction341]</buttonaction>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <scheduledelay></scheduledelay>
-          <scheduletimeunit></scheduletimeunit>
-          <tostate>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate107]</tostate>
-          <triggertype></triggertype>
-          <waitforworkflow></waitforworkflow>
-          <waitforworkflowstate></waitforworkflowstate>
-          <initcondition>
-            <formula><![CDATA["User Role" IN ("Role1") AND isEmpty("Next Approver") = 'F' AND "Type" IN ("Transaction Type1")]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>User Role</name>
-                <value>STDUSERROLE</value>
-              </parameter>
-              <parameter>
-                <name>Role1</name>
-                <selectrecordtype>-118</selectrecordtype>
-                <value>[scriptid=customrole_dsl__wd_std_apanalyst]</value>
-              </parameter>
-              <parameter>
-                <name>Next Approver</name>
-                <value>STDBODYNEXTAPPROVER</value>
               </parameter>
               <parameter>
                 <name>Type</name>
@@ -344,15 +208,15 @@
       <description></description>
       <donotexitworkflow>F</donotexitworkflow>
       <name>Check Vendor Category </name>
-      <positionx>293</positionx>
-      <positiony>273</positiony>
+      <positionx>423</positionx>
+      <positiony>53</positiony>
     </workflowstate>
     <workflowstate scriptid="workflowstate93">
       <description></description>
       <donotexitworkflow>F</donotexitworkflow>
       <name>Account Payable Team Approval</name>
-      <positionx>893</positionx>
-      <positiony>143</positiony>
+      <positionx>423</positionx>
+      <positiony>493</positiony>
       <workflowactions triggertype="ONENTRY">
         <setfieldvalueaction scriptid="workflowaction347">
           <clienttriggerfields></clienttriggerfields>
@@ -699,20 +563,6 @@
             </parameters>
           </initcondition>
         </lockrecordaction>
-        <setdisplaytypeaction scriptid="workflowaction401">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>HIDDEN</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
       </workflowactions>
       <workflowtransitions>
         <workflowtransition scriptid="workflowtransition281">
@@ -753,8 +603,8 @@
       <description></description>
       <donotexitworkflow>T</donotexitworkflow>
       <name>Approve</name>
-      <positionx>393</positionx>
-      <positiony>403</positiony>
+      <positionx>173</positionx>
+      <positiony>493</positiony>
       <workflowactions triggertype="ONENTRY">
         <setfieldvalueaction scriptid="workflowaction337">
           <clienttriggerfields></clienttriggerfields>
@@ -942,29 +792,13 @@
           </initcondition>
         </sendemailaction>
       </workflowactions>
-      <workflowactions triggertype="BEFORELOAD">
-        <setdisplaytypeaction scriptid="workflowaction405">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>HIDDEN</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
-      </workflowactions>
     </workflowstate>
     <workflowstate scriptid="workflowstate95">
       <description></description>
       <donotexitworkflow>F</donotexitworkflow>
       <name>Reject</name>
-      <positionx>1393</positionx>
-      <positiony>403</positiony>
+      <positionx>783</positionx>
+      <positiony>503</positiony>
       <workflowactions triggertype="ONENTRY">
         <setfieldvalueaction scriptid="workflowaction336">
           <clienttriggerfields></clienttriggerfields>
@@ -1209,20 +1043,6 @@
             <type>VISUAL_BUILDER</type>
           </initcondition>
         </addbuttonaction>
-        <setdisplaytypeaction scriptid="workflowaction406">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>HIDDEN</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
       </workflowactions>
       <workflowtransitions>
         <workflowtransition scriptid="workflowtransition293">
@@ -1247,8 +1067,8 @@
       <description></description>
       <donotexitworkflow>F</donotexitworkflow>
       <name>Look for Approver</name>
-      <positionx>573</positionx>
-      <positiony>143</positiony>
+      <positionx>423</positionx>
+      <positiony>273</positiony>
       <workflowactions triggertype="ONENTRY">
         <customaction scriptid="workflowaction344">
           <conditionsavedsearch></conditionsavedsearch>
@@ -1453,20 +1273,6 @@
             </parameters>
           </initcondition>
         </lockrecordaction>
-        <setdisplaytypeaction scriptid="workflowaction402">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>HIDDEN</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
       </workflowactions>
       <workflowtransitions>
         <workflowtransition scriptid="workflowtransition295">
@@ -1547,8 +1353,8 @@
       <description></description>
       <donotexitworkflow>F</donotexitworkflow>
       <name>Get apprver</name>
-      <positionx>573</positionx>
-      <positiony>243</positiony>
+      <positionx>423</positionx>
+      <positiony>383</positiony>
       <workflowtransitions>
         <workflowtransition scriptid="workflowtransition296">
           <buttonaction></buttonaction>
@@ -1558,299 +1364,6 @@
           <scheduledelay></scheduledelay>
           <scheduletimeunit></scheduletimeunit>
           <tostate>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate96]</tostate>
-          <triggertype></triggertype>
-          <waitforworkflow></waitforworkflow>
-          <waitforworkflowstate></waitforworkflowstate>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </workflowtransition>
-      </workflowtransitions>
-    </workflowstate>
-    <workflowstate scriptid="workflowstate107">
-      <description></description>
-      <donotexitworkflow>F</donotexitworkflow>
-      <name>AP Role Next Approver</name>
-      <positionx>1163</positionx>
-      <positiony>143</positiony>
-      <workflowactions triggertype="BEFORELOAD">
-        <addbuttonaction scriptid="workflowaction393">
-          <buttondescription></buttondescription>
-          <checkconditionbeforeexecution>T</checkconditionbeforeexecution>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <exposetorecordactionapi>F</exposetorecordactionapi>
-          <isinactive>F</isinactive>
-          <label>Approve</label>
-          <saverecordfirst>T</saverecordfirst>
-          <initcondition>
-            <formula><![CDATA["Next Approver" IN ("Current User")]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>Next Approver</name>
-                <value>STDBODYNEXTAPPROVER</value>
-              </parameter>
-              <parameter>
-                <name>Current User</name>
-                <selectrecordtype>-4</selectrecordtype>
-                <value>@CURRENTUSER@</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </addbuttonaction>
-        <addbuttonaction scriptid="workflowaction394">
-          <buttondescription></buttondescription>
-          <checkconditionbeforeexecution>T</checkconditionbeforeexecution>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <exposetorecordactionapi>F</exposetorecordactionapi>
-          <isinactive>F</isinactive>
-          <label>Reject</label>
-          <saverecordfirst>T</saverecordfirst>
-          <initcondition>
-            <formula><![CDATA["Next Approver" IN ("Current User")]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>Next Approver</name>
-                <value>STDBODYNEXTAPPROVER</value>
-              </parameter>
-              <parameter>
-                <name>Current User</name>
-                <selectrecordtype>-4</selectrecordtype>
-                <value>@CURRENTUSER@</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </addbuttonaction>
-        <lockrecordaction scriptid="workflowaction397">
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <isinactive>F</isinactive>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </lockrecordaction>
-        <setdisplaytypeaction scriptid="workflowaction399">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>DISABLED</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYAPPROVALSTATUS</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
-        <setdisplaytypeaction scriptid="workflowaction403">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>DISABLED</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
-      </workflowactions>
-      <workflowtransitions>
-        <workflowtransition scriptid="workflowtransition308">
-          <buttonaction>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate107.workflowaction394]</buttonaction>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <scheduledelay></scheduledelay>
-          <scheduletimeunit></scheduletimeunit>
-          <tostate>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate95]</tostate>
-          <triggertype></triggertype>
-          <waitforworkflow></waitforworkflow>
-          <waitforworkflowstate></waitforworkflowstate>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </workflowtransition>
-        <workflowtransition scriptid="workflowtransition309">
-          <buttonaction>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate107.workflowaction393]</buttonaction>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <scheduledelay></scheduledelay>
-          <scheduletimeunit></scheduletimeunit>
-          <tostate>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate108]</tostate>
-          <triggertype></triggertype>
-          <waitforworkflow></waitforworkflow>
-          <waitforworkflowstate></waitforworkflowstate>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </workflowtransition>
-      </workflowtransitions>
-    </workflowstate>
-    <workflowstate scriptid="workflowstate108">
-      <description></description>
-      <donotexitworkflow>F</donotexitworkflow>
-      <name>AP Role Approver</name>
-      <positionx>1163</positionx>
-      <positiony>243</positiony>
-      <workflowactions triggertype="ONENTRY">
-        <setfieldvalueaction scriptid="workflowaction407">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <field>[scriptid=custbody_approval_matrix]</field>
-          <isinactive>F</isinactive>
-          <scheduledelay></scheduledelay>
-          <schedulemode>DELAY</schedulemode>
-          <schedulerecurrence></schedulerecurrence>
-          <scheduletimeofday></scheduletimeofday>
-          <scheduletimeunit></scheduletimeunit>
-          <valuechecked>F</valuechecked>
-          <valuedate></valuedate>
-          <valuefield></valuefield>
-          <valueformula></valueformula>
-          <valuejoinfield></valuejoinfield>
-          <valueselect>[scriptid=customrecord_purchasebill_approval_matri.val_401202_4382108_477]</valueselect>
-          <valuetext></valuetext>
-          <valuetype>STATIC</valuetype>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setfieldvalueaction>
-      </workflowactions>
-      <workflowactions triggertype="BEFORELOAD">
-        <addbuttonaction scriptid="workflowaction395">
-          <buttondescription></buttondescription>
-          <checkconditionbeforeexecution>T</checkconditionbeforeexecution>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <exposetorecordactionapi>F</exposetorecordactionapi>
-          <isinactive>F</isinactive>
-          <label>Approve</label>
-          <saverecordfirst>T</saverecordfirst>
-          <initcondition>
-            <formula><![CDATA["User Role" IN ("Role1")]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>User Role</name>
-                <value>STDUSERROLE</value>
-              </parameter>
-              <parameter>
-                <name>Role1</name>
-                <selectrecordtype>-118</selectrecordtype>
-                <value>[scriptid=customrole_dsl__wd_std_apanalyst]</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </addbuttonaction>
-        <addbuttonaction scriptid="workflowaction396">
-          <buttondescription></buttondescription>
-          <checkconditionbeforeexecution>T</checkconditionbeforeexecution>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <exposetorecordactionapi>F</exposetorecordactionapi>
-          <isinactive>F</isinactive>
-          <label>Reject</label>
-          <saverecordfirst>T</saverecordfirst>
-          <initcondition>
-            <formula><![CDATA["User Role" IN ("Role1")]]></formula>
-            <type>VISUAL_BUILDER</type>
-            <parameters>
-              <parameter>
-                <name>User Role</name>
-                <value>STDUSERROLE</value>
-              </parameter>
-              <parameter>
-                <name>Role1</name>
-                <selectrecordtype>-118</selectrecordtype>
-                <value>[scriptid=customrole_dsl__wd_std_apanalyst]</value>
-              </parameter>
-            </parameters>
-          </initcondition>
-        </addbuttonaction>
-        <lockrecordaction scriptid="workflowaction398">
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <isinactive>F</isinactive>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </lockrecordaction>
-        <setdisplaytypeaction scriptid="workflowaction400">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>DISABLED</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYAPPROVALSTATUS</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
-        <setdisplaytypeaction scriptid="workflowaction404">
-          <clienttriggerfields></clienttriggerfields>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <displaytype>HIDDEN</displaytype>
-          <eventtypes></eventtypes>
-          <field>STDBODYNEXTAPPROVER</field>
-          <isinactive>F</isinactive>
-          <issublistfield>F</issublistfield>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </setdisplaytypeaction>
-      </workflowactions>
-      <workflowtransitions>
-        <workflowtransition scriptid="workflowtransition310">
-          <buttonaction>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate108.workflowaction395]</buttonaction>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <scheduledelay></scheduledelay>
-          <scheduletimeunit></scheduletimeunit>
-          <tostate>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate94]</tostate>
-          <triggertype></triggertype>
-          <waitforworkflow></waitforworkflow>
-          <waitforworkflowstate></waitforworkflowstate>
-          <initcondition>
-            <formula></formula>
-            <type>VISUAL_BUILDER</type>
-          </initcondition>
-        </workflowtransition>
-        <workflowtransition scriptid="workflowtransition311">
-          <buttonaction>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate108.workflowaction396]</buttonaction>
-          <conditionsavedsearch></conditionsavedsearch>
-          <contexttypes>ACTION|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|RECORDACTION|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|EVENTSUBSCRIBER|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OFFLINECLIENT|OTHER|PAYMENTPOSTBACK|PAYMENTGATEWAY|PLATFORMEXTENSION|PORTLET|PROMOTIONS|CONSOLRATEADJUSTOR|RESTWEBSERVICES|RESTLET|ADVANCEDREVREC|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|WEBSERVICES|SUBSCRIBERSCRIPT|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WORKBOOKBUILDER|WORKFLOW</contexttypes>
-          <eventtypes></eventtypes>
-          <scheduledelay></scheduledelay>
-          <scheduletimeunit></scheduletimeunit>
-          <tostate>[scriptid=customworkflow_im_po_and_bill_approval_f.workflowstate107]</tostate>
           <triggertype></triggertype>
           <waitforworkflow></waitforworkflow>
           <waitforworkflowstate></waitforworkflowstate>
