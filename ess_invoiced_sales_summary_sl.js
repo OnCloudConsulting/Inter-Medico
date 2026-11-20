@@ -19,6 +19,8 @@
  *   action=txn         saved-search rows for a date range (click a NetSuite day)
  *   &export=csv        CSV download of the page being viewed
  *   &asof=YYYY-MM-DD   report date (default: business day before today)
+ *   view=portlet       compact, chrome-free summary for the dashboard portlet (iframe);
+ *                      every link opens the full report in the main window
  *
  * Script parameters (all optional; defaults in DEFAULTS):
  *   custscript_ess_search_id     Saved search internal ID or script ID   (3244)
@@ -60,12 +62,14 @@ define(['N/search', 'N/file', 'N/runtime', 'N/format', 'N/url', 'N/ui/serverWidg
         const onRequest = (ctx) => {
             const params = ctx.request.parameters || {};
             const wantsCsv = params.export === 'csv';
+            const isPortlet = params.view === 'portlet';
             let cfg = null;
             try {
                 cfg = getConfig();
                 const action = params.action || 'summary';
                 const asOf = fromKey(params.asof) || prevBusinessDay(userToday());
 
+                if (isPortlet) return renderPortlet(ctx, cfg, asOf);
                 if (action === 'detail') return renderDetail(ctx, cfg, asOf, params, wantsCsv);
                 if (action === 'txn') return renderTransactions(ctx, cfg, asOf, params, wantsCsv);
                 return renderSummary(ctx, cfg, asOf, wantsCsv);
@@ -73,6 +77,9 @@ define(['N/search', 'N/file', 'N/runtime', 'N/format', 'N/url', 'N/ui/serverWidg
                 log.error({ title: 'Executive Sales Summary error', details: (e && e.stack) || e });
                 const msg = (e instanceof UserError) ? e.message
                     : 'Something went wrong while building the report: ' + ((e && e.message) || e);
+                if (isPortlet) {
+                    return writeBare(ctx, `<div class="essp-err"><b>Sales summary unavailable.</b> ${esc(msg)}</div>`);
+                }
                 if (wantsCsv) {
                     ctx.response.setHeader({ name: 'Content-Type', value: 'text/plain' });
                     ctx.response.write(msg);
@@ -166,6 +173,54 @@ define(['N/search', 'N/file', 'N/runtime', 'N/format', 'N/url', 'N/ui/serverWidg
   ${footer(cfg, data)}
 </div>`;
             writePage(ctx, cfg.title, body);
+        }
+
+        /**
+         * Compact dashboard view (loaded in an iframe by the portlet script).
+         * Rows = Daily / MTD / QTD / YTD; columns = CY, LY, Var $, Var %.
+         * Amounts are abbreviated ($1.92M) with the exact figure on hover.
+         */
+        function renderPortlet(ctx, cfg, asOf) {
+            const P = buildPeriods(asOf);
+            const data = getDailySales(cfg, P.lyytd.from, asOf);
+            const t = {};
+            Object.keys(P).forEach(k => { t[k] = sumRange(data, P[k].from, P[k].to); });
+
+            const top = (href, inner, title) =>
+                `<a href="${esc(href)}" target="_top"${title ? ` title="${esc(title)}"` : ''}>${inner}</a>`;
+            const amt = (pid) => top(link({ action: 'detail', p: pid, asof: key(asOf) }),
+                short(t[pid]), `${P[pid].label} ${rng(P[pid])}: ${money(t[pid])}`);
+
+            const row = (label, pid, lyPid) => {
+                const diff = lyPid ? t[pid] - t[lyPid] : null;
+                const p = lyPid ? pct(t[pid], t[lyPid]) : null;
+                return `<tr>
+                    <td class="l"><b>${label}</b><span class="rg">${rng(P[pid])}</span></td>
+                    <td class="cy">${amt(pid)}</td>
+                    <td>${lyPid ? amt(lyPid) : '<span class="muted">—</span>'}</td>
+                    <td class="vd ${diff === null ? '' : (diff < 0 ? 'down' : 'up')}">${diff === null ? '<span class="muted">—</span>' : esc(short(diff, true))}</td>
+                    <td>${lyPid ? varChip(p) : '<span class="muted">—</span>'}</td>
+                </tr>`;
+            };
+
+            const warn = data.warnings.length
+                ? `<div class="essp-warn" title="${esc(data.warnings.join(' '))}">⚠ Data warning – open the full report for details.</div>` : '';
+
+            writeBare(ctx, `
+<div class="essp-head">
+  <span>As of <b>${esc(longDate(asOf))}</b></span>
+  ${top(link({ asof: key(asOf) }), 'Full report ›')}
+</div>
+${warn}
+<table class="essp-t">
+  <thead><tr><th class="l">Period</th><th>Sales</th><th>LY</th><th class="vd">Var $</th><th>Var %</th></tr></thead>
+  <tbody>
+    ${row('Daily', 'daily', null)}
+    ${row('MTD', 'mtd', 'lymtd')}
+    ${row('QTD', 'qtd', 'lyqtd')}
+    ${row('YTD', 'ytd', 'lyytd')}
+  </tbody>
+</table>`);
         }
 
         /** Day-by-day breakdown of one period, with month subtotals for long ranges. */
@@ -615,6 +670,16 @@ define(['N/search', 'N/file', 'N/runtime', 'N/format', 'N/url', 'N/ui/serverWidg
             return neg ? -n : n;
         }
 
+        /** $1.92M / $92.8K / $512 – for the narrow dashboard portlet. */
+        function short(n, signed) {
+            const a = Math.abs(n);
+            let s;
+            if (a >= 1e6) s = (a / 1e6).toFixed(2) + 'M';
+            else if (a >= 1e3) s = (a / 1e3).toFixed(1) + 'K';
+            else s = a.toFixed(0);
+            return (n < 0 ? '-$' : (signed && n > 0 ? '+$' : '$')) + s;
+        }
+
         const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
         const r2 = n => (Math.round(n * 100) / 100).toFixed(2);
         const pct = (a, b) => (b ? (a - b) / Math.abs(b) : null);
@@ -715,6 +780,39 @@ define(['N/search', 'N/file', 'N/runtime', 'N/format', 'N/url', 'N/ui/serverWidg
             const contents = rows.map(r => r.map(cell).join(',')).join('\r\n');
             ctx.response.writeFile({ file: file.create({ name, fileType: file.Type.CSV, contents }), isInline: false });
         }
+
+        /** Chrome-free HTML page for the dashboard iframe; reports its height to the portlet. */
+        function writeBare(ctx, bodyHtml) {
+            ctx.response.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_top">${PORTLET_STYLE}</head>
+<body><div class="essp" id="essp">${bodyHtml}</div>
+<script>
+(function(){function h(){try{window.parent.postMessage({essHeight:document.getElementById('essp').offsetHeight+4},'*');}catch(e){}}
+window.addEventListener('load',h);window.addEventListener('resize',h);setTimeout(h,300);})();
+</script></body></html>`);
+        }
+
+        const PORTLET_STYLE = `<style>
+html,body{margin:0;padding:0;background:transparent}
+.essp{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1f2937;font-size:12.5px;padding:2px 2px 4px}
+.essp a{color:#0b5cad;text-decoration:none}.essp a:hover{text-decoration:underline}
+.essp .muted{color:#9ca3af}.essp .up{color:#047857}.essp .down{color:#b91c1c}
+.essp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;color:#6b7280;flex-wrap:wrap}
+.essp-head b{color:#0b2545}
+.essp-t{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.essp-t th{background:#0b2545;color:#fff;font-weight:600;padding:6px 8px;text-align:right;font-size:11.5px;white-space:nowrap}
+.essp-t th:first-child{border-radius:6px 0 0 0}.essp-t th:last-child{border-radius:0 6px 0 0}
+.essp-t td{padding:7px 8px;border-bottom:1px solid #eef0f3;text-align:right;white-space:nowrap;vertical-align:middle}
+.essp-t tr:last-child td{border-bottom:0}
+.essp-t .l{text-align:left}
+.essp-t td.cy a{font-weight:700;font-size:14px;color:#0b2545}
+.essp-t td.vd{font-weight:600}
+.essp-t .rg{display:block;font-size:10.5px;color:#9ca3af;font-weight:400;margin-top:1px}
+.essp .chip{display:inline-block;padding:1px 6px;border-radius:999px;font-size:11.5px;font-weight:600;background:#f3f4f6;color:#6b7280}
+.essp .chip.up{background:#ecfdf5;color:#047857}.essp .chip.down{background:#fef2f2;color:#b91c1c}
+.essp-warn{background:#fffbeb;border:1px solid #fcd34d;color:#92400e;padding:5px 8px;border-radius:6px;margin-bottom:8px;font-size:11.5px}
+.essp-err{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;padding:10px;border-radius:6px;line-height:1.45}
+@media (max-width:420px){.essp-t .vd{display:none}.essp-t .rg{display:none}}
+</style>`;
 
         function writePage(ctx, title, bodyHtml) {
             const form = serverWidget.createForm({ title });
